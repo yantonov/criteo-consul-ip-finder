@@ -1,0 +1,1 @@
+module consul-ip-finder
