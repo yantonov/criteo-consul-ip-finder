@@ -17,7 +17,7 @@ func FindService(ip string, dc string, env string) ([]string, error) {
 
 	resultChannel := make(chan string, len(services))
 
-	parallelismLevel := 20
+	parallelismLevel := 20 // TODO: can be extracted to command line parameters
 	parallelismLevelChannel := make(chan int, parallelismLevel)
 
 	wg := sync.WaitGroup{}
