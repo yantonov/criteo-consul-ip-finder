@@ -15,16 +15,24 @@ func FindService(ip string, dc string, env string) ([]string, error) {
 
 	println(fmt.Sprintf("Total number of service=%d", len(services)))
 
-	ch := make(chan string, len(services))
+	resultChannel := make(chan string, len(services))
+
+	parallelismLevel := 20
+	parallelismLevelChannel := make(chan int, parallelismLevel)
 
 	wg := sync.WaitGroup{}
 	for _, service := range services {
 		wg.Add(1)
-		go inspectService(client, service, ip, ch, &wg)
+		parallelismLevelChannel <- 1
+		go inspectService(client, service, ip, resultChannel, parallelismLevelChannel, &wg)
 	}
 	wg.Wait()
-	close(ch)
+	close(resultChannel)
 
+	return extractFoundServices(resultChannel)
+}
+
+func extractFoundServices(ch chan string) ([]string, error) {
 	var result []string
 
 	for foundService := range ch {
@@ -35,7 +43,8 @@ func FindService(ip string, dc string, env string) ([]string, error) {
 	return result, nil
 }
 
-func inspectService(client consul.Client, serviceName string, ip string, ch chan string, wg *sync.WaitGroup) {
+func inspectService(client consul.Client, serviceName string, ip string, resultChannel chan string, parallelismLevelChannel chan int, wg *sync.WaitGroup) {
+	<-parallelismLevelChannel
 	serviceInfo, err := consul.GetService(client, serviceName)
 	found := false
 	if err == nil {
@@ -43,14 +52,14 @@ func inspectService(client consul.Client, serviceName string, ip string, ch chan
 			fmt.Printf("service=%s instance with address=%s\n", serviceName, instance.ServiceAddress)
 			if instance.ServiceAddress == ip {
 				fmt.Printf("Found service=%s with address=%s\n", serviceName, instance.ServiceAddress)
-				ch <- serviceName
+				resultChannel <- serviceName
 				found = true
 				break
 			}
 		}
 	}
 	if !found {
-		ch <- ""
+		resultChannel <- ""
 	}
 	wg.Done()
 }
