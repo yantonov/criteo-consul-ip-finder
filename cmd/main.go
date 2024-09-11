@@ -13,7 +13,7 @@ func main() {
 		log.Fatal(cmdParamErr)
 	}
 
-	services, err := lib.FindService(parameters.Ip, parameters.Datacenter, parameters.Environment)
+	services, err := lib.FindService(parameters.Ip, parameters.Datacenter, parameters.Environment, parameters.ParallelismLevel)
 	if err != nil {
 		log.Fatal(err)
 	}

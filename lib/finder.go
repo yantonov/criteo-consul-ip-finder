@@ -3,10 +3,11 @@ package lib
 import (
 	"consul-ip-finder/lib/consul"
 	"fmt"
+	"log"
 	"sync"
 )
 
-func FindService(ip string, dc string, env string) ([]string, error) {
+func FindService(ip string, dc string, env string, parallelismLevel int) ([]string, error) {
 	client := consul.Create(dc, env)
 	services, err := consul.GetListOfServices(client)
 	if err != nil {
@@ -17,16 +18,17 @@ func FindService(ip string, dc string, env string) ([]string, error) {
 
 	resultChannel := make(chan string, len(services))
 
-	parallelismLevel := 20 // TODO: can be extracted to command line parameters
 	parallelismLevelChannel := make(chan int, parallelismLevel)
 
 	wg := sync.WaitGroup{}
 	for _, service := range services {
+		println(service)
 		wg.Add(1)
 		parallelismLevelChannel <- 1
 		go inspectService(client, service, ip, resultChannel, parallelismLevelChannel, &wg)
 	}
 	wg.Wait()
+
 	close(resultChannel)
 
 	return extractFoundServices(resultChannel)
@@ -47,6 +49,9 @@ func inspectService(client consul.Client, serviceName string, ip string, resultC
 	<-parallelismLevelChannel
 	serviceInfo, err := consul.GetService(client, serviceName)
 	found := false
+	if err != nil {
+		log.Println("Error getting service info from Consul:", err)
+	}
 	if err == nil {
 		for _, instance := range serviceInfo.Instances {
 			fmt.Printf("service=%s instance with address=%s\n", serviceName, instance.ServiceAddress)
