@@ -10,7 +10,8 @@ import (
 )
 
 type Client struct {
-	URL string
+	URL     string
+	Verbose bool
 }
 
 type ServiceInstanceResponse struct {
@@ -21,9 +22,10 @@ type ServiceResponse struct {
 	Instances []ServiceInstanceResponse
 }
 
-func Create(dc string, env string) Client {
+func Create(dc string, env string, verbose bool) Client {
 	return Client{
-		URL: getConsulURL(dc, env),
+		URL:     getConsulURL(dc, env),
+		Verbose: verbose,
 	}
 }
 
@@ -34,7 +36,10 @@ func getConsulURL(dc string, env string) string {
 func GetListOfServices(client Client) ([]string, error) {
 	url := fmt.Sprintf("%s/v1/catalog/services", client.URL)
 
-	println(url)
+	println("Obtain list of services...")
+	if client.Verbose {
+		println(url)
+	}
 
 	consulClient := http.Client{
 		Timeout: time.Second * 5,

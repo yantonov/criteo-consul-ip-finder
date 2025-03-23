@@ -2,6 +2,7 @@ package main
 
 import (
 	"consul-ip-finder/cmd/cli"
+	"consul-ip-finder/cmd/ui"
 	"consul-ip-finder/lib"
 	"log"
 )
@@ -13,7 +14,20 @@ func main() {
 		log.Fatal(cmdParamErr)
 	}
 
-	services, err := lib.FindService(parameters.Ip, parameters.Datacenter, parameters.Environment, parameters.ParallelismLevel)
+	var progressBar ui.ProgressBar = nil
+
+	if parameters.Verbose {
+		progressBar = &ui.EmptyProgressBar{}
+	} else {
+		progressBar = &ui.TerminalWidgetProgressBar{}
+	}
+	services, err := lib.FindService(
+		parameters.Ip,
+		parameters.Datacenter,
+		parameters.Environment,
+		parameters.ParallelismLevel,
+		parameters.Verbose,
+		progressBar)
 	if err != nil {
 		log.Fatal(err)
 	}

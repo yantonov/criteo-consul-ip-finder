@@ -1,43 +1,54 @@
 package lib
 
 import (
+	"consul-ip-finder/cmd/ui"
 	"consul-ip-finder/lib/consul"
 	"fmt"
 	"log"
 	"sync"
 )
 
-func FindService(ip string, dc string, env string, parallelismLevel int) ([]string, error) {
-	client := consul.Create(dc, env)
+func FindService(
+	ip string,
+	dc string, env string,
+	parallelismLevel int,
+	verbose bool,
+	bar ui.ProgressBar) ([]string, error) {
+
+	client := consul.Create(dc, env, verbose)
 	services, err := consul.GetListOfServices(client)
 	if err != nil {
 		return nil, fmt.Errorf("error getting services from Consul: %v", err)
 	}
 
-	println(fmt.Sprintf("Total number of service=%d", len(services)))
+	numberOfServices := len(services)
+	println(fmt.Sprintf("Total number of services=%d", numberOfServices))
 
-	resultChannel := make(chan string, len(services))
+	resultChannel := make(chan string, numberOfServices)
 
 	parallelismLevelChannel := make(chan int, parallelismLevel)
 
+	bar.Init(numberOfServices)
+
 	wg := sync.WaitGroup{}
 	for _, service := range services {
-		println(service)
 		wg.Add(1)
 		parallelismLevelChannel <- 1
-		go inspectService(client, service, ip, resultChannel, parallelismLevelChannel, &wg)
+		go inspectService(client, service, ip, resultChannel, parallelismLevelChannel, verbose, bar, &wg)
 	}
-	wg.Wait()
 
+	wg.Wait()
 	close(resultChannel)
 
-	return extractFoundServices(resultChannel)
+	return extractFoundServices(numberOfServices, resultChannel)
 }
 
-func extractFoundServices(ch chan string) ([]string, error) {
+func extractFoundServices(numberOfServices int,
+	ch chan string) ([]string, error) {
 	var result []string
 
-	for foundService := range ch {
+	for _ = range numberOfServices {
+		foundService := <-ch
 		if foundService != "" {
 			result = append(result, foundService)
 		}
@@ -45,18 +56,32 @@ func extractFoundServices(ch chan string) ([]string, error) {
 	return result, nil
 }
 
-func inspectService(client consul.Client, serviceName string, ip string, resultChannel chan string, parallelismLevelChannel chan int, wg *sync.WaitGroup) {
-	<-parallelismLevelChannel
+func inspectService(
+	client consul.Client,
+	serviceName string,
+	ip string,
+	resultChannel chan string,
+	parallelismLevelChannel chan int, verbose bool, bar ui.ProgressBar,
+	wg *sync.WaitGroup) {
+
+	if verbose {
+		println(serviceName)
+	}
 	serviceInfo, err := consul.GetService(client, serviceName)
 	found := false
 	if err != nil {
-		log.Println("Error getting service info from Consul:", err)
-	}
-	if err == nil {
+		if verbose {
+			log.Println("Error getting service info from Consul:", err)
+		}
+	} else {
 		for _, instance := range serviceInfo.Instances {
-			fmt.Printf("service=%s instance with address=%s\n", serviceName, instance.ServiceAddress)
+			if verbose {
+				fmt.Printf("service=%s instance with address=%s\n", serviceName, instance.ServiceAddress)
+			}
 			if instance.ServiceAddress == ip {
-				fmt.Printf("Found service=%s with address=%s\n", serviceName, instance.ServiceAddress)
+				if verbose {
+					fmt.Printf("Found service=%s with address=%s\n", serviceName, instance.ServiceAddress)
+				}
 				resultChannel <- serviceName
 				found = true
 				break
@@ -66,5 +91,7 @@ func inspectService(client consul.Client, serviceName string, ip string, resultC
 	if !found {
 		resultChannel <- ""
 	}
+	bar.Add(1)
+	<-parallelismLevelChannel
 	wg.Done()
 }
