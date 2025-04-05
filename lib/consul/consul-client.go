@@ -56,7 +56,14 @@ func GetListOfServices(client Client) ([]string, error) {
 	}
 
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				if client.Verbose {
+					println("Error closing response body:", err)
+				}
+			}
+		}(res.Body)
 	}
 
 	body, readErr := io.ReadAll(res.Body)
@@ -99,7 +106,14 @@ func GetService(client Client, serviceName string) (*ServiceResponse, error) {
 	}
 
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				if client.Verbose {
+					println("Error closing response body:", err)
+				}
+			}
+		}(res.Body)
 	}
 
 	body, readErr := io.ReadAll(res.Body)
