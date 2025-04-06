@@ -24,7 +24,7 @@ func FindService(
 	numberOfServices := len(services)
 	println(fmt.Sprintf("Total number of services=%d", numberOfServices))
 
-	resultChannel := make(chan string, numberOfServices)
+	resultChannel := make(chan string, len(services))
 
 	parallelismLevelChannel := make(chan int, parallelismLevel)
 
@@ -40,18 +40,14 @@ func FindService(
 	wg.Wait()
 	close(resultChannel)
 
-	return extractFoundServices(numberOfServices, resultChannel)
+	return extractFoundServices(resultChannel)
 }
 
-func extractFoundServices(numberOfServices int,
-	ch chan string) ([]string, error) {
+func extractFoundServices(ch chan string) ([]string, error) {
 	var result []string
 
-	for _ = range numberOfServices {
-		foundService := <-ch
-		if foundService != "" {
-			result = append(result, foundService)
-		}
+	for foundService := range ch {
+		result = append(result, foundService)
 	}
 	return result, nil
 }
@@ -70,7 +66,6 @@ func inspectService(
 		println(serviceName)
 	}
 	serviceInfo, err := consul.GetService(client, serviceName)
-	found := false
 	if err != nil {
 		if verbose {
 			log.Println("Error getting service info from Consul:", err)
@@ -85,13 +80,9 @@ func inspectService(
 					fmt.Printf("Found service=%s with address=%s\n", serviceName, instance.ServiceAddress)
 				}
 				resultChannel <- serviceName
-				found = true
 				break
 			}
 		}
-	}
-	if !found {
-		resultChannel <- ""
 	}
 	bar.Add(1)
 	<-parallelismLevelChannel
