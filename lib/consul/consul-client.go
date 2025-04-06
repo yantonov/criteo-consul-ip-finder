@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"sort"
 	"time"
@@ -36,9 +37,9 @@ func getConsulURL(dc string, env string) string {
 func GetListOfServices(client Client) ([]string, error) {
 	url := fmt.Sprintf("%s/v1/catalog/services", client.URL)
 
-	println("Obtain list of services...")
+	log.Println("Obtain list of services...")
 	if client.Verbose {
-		println(url)
+		log.Println(url)
 	}
 
 	consulClient := http.Client{
@@ -60,7 +61,7 @@ func GetListOfServices(client Client) ([]string, error) {
 			err := Body.Close()
 			if err != nil {
 				if client.Verbose {
-					println("Error closing response body:", err)
+					log.Printf("Error closing response body:", err)
 				}
 			}
 		}(res.Body)
@@ -108,7 +109,7 @@ func GetService(client Client, serviceName string) (*ServiceResponse, error) {
 	if (res.StatusCode / 100) != 2 {
 		message := fmt.Sprintf("unexpected status code: %d url=%s", res.StatusCode, url)
 		if client.Verbose {
-			println(message)
+			log.Println(message)
 		}
 		return nil, fmt.Errorf(message)
 	}
@@ -118,7 +119,7 @@ func GetService(client Client, serviceName string) (*ServiceResponse, error) {
 			err := Body.Close()
 			if err != nil {
 				if client.Verbose {
-					println("Error closing response body:", err)
+					log.Printf("Error closing response body:", err)
 				}
 			}
 		}(res.Body)

@@ -32,10 +32,11 @@ func main() {
 		log.Fatal(err)
 	}
 	if len(services) == 0 {
-		log.Fatal("No services found for ip=" + parameters.Ip)
-	}
-	println("Found services:")
-	for _, service := range services {
-		println(service)
+		println("No services found for ip=" + parameters.Ip)
+	} else {
+		println("Found services:")
+		for _, service := range services {
+			println(service)
+		}
 	}
 }

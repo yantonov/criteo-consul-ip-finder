@@ -22,9 +22,9 @@ func FindService(
 	}
 
 	numberOfServices := len(services)
-	println(fmt.Sprintf("Total number of services=%d", numberOfServices))
+	log.Printf("Total number of services=%d", numberOfServices)
 
-	resultChannel := make(chan string, len(services))
+	resultChannel := make(chan string, numberOfServices)
 
 	parallelismLevelChannel := make(chan int, parallelismLevel)
 
@@ -67,7 +67,7 @@ func inspectService(
 	}()
 
 	if verbose {
-		println(serviceName)
+		log.(serviceName)
 	}
 	serviceInfo, err := consul.GetService(client, serviceName)
 	if err != nil {
