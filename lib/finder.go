@@ -60,7 +60,11 @@ func inspectService(
 	parallelismLevelChannel chan int, verbose bool, bar ui.ProgressBar,
 	wg *sync.WaitGroup) {
 
-	defer wg.Done()
+	defer func() {
+		bar.Add(1)
+		<-parallelismLevelChannel
+		wg.Done()
+	}()
 
 	if verbose {
 		println(serviceName)
@@ -84,6 +88,4 @@ func inspectService(
 			}
 		}
 	}
-	bar.Add(1)
-	<-parallelismLevelChannel
 }
