@@ -105,6 +105,14 @@ func GetService(client Client, serviceName string) (*ServiceResponse, error) {
 		return nil, getErr
 	}
 
+	if (res.StatusCode / 100) != 2 {
+		message := fmt.Sprintf("unexpected status code: %d url=%s", res.StatusCode, url)
+		if client.Verbose {
+			println(message)
+		}
+		return nil, fmt.Errorf(message)
+	}
+
 	if res.Body != nil {
 		defer func(Body io.ReadCloser) {
 			err := Body.Close()
