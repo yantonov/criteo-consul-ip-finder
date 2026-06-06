@@ -67,7 +67,7 @@ func inspectService(
 	}()
 
 	if verbose {
-		log.(serviceName)
+		log.Println(serviceName)
 	}
 	serviceInfo, err := consul.GetService(client, serviceName)
 	if err != nil {
@@ -77,11 +77,11 @@ func inspectService(
 	} else {
 		for _, instance := range serviceInfo.Instances {
 			if verbose {
-				fmt.Printf("service=%s instance with address=%s\n", serviceName, instance.ServiceAddress)
+				log.Printf("service=%s instance with address=%s\n", serviceName, instance.ServiceAddress)
 			}
 			if instance.ServiceAddress == ip {
 				if verbose {
-					fmt.Printf("Found service=%s with address=%s\n", serviceName, instance.ServiceAddress)
+					log.Printf("Found service=%s with address=%s\n", serviceName, instance.ServiceAddress)
 				}
 				resultChannel <- serviceName
 				break
