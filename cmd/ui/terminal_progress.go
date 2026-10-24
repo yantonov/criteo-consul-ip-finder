@@ -12,8 +12,6 @@ func (p *TerminalWidgetProgressBar) Init(count int) {
 
 func (p *TerminalWidgetProgressBar) Add(count int) {
 	if p.bar != nil {
-		err := p.bar.Add(count)
-		if err != nil {
-		}
+		_ = p.bar.Add(count)
 	}
 }

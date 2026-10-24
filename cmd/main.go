@@ -14,7 +14,7 @@ func main() {
 		log.Fatal(cmdParamErr)
 	}
 
-	var progressBar ui.ProgressBar = nil
+	var progressBar ui.ProgressBar
 
 	if parameters.Verbose {
 		progressBar = &ui.EmptyProgressBar{}

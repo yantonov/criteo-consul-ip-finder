@@ -31,7 +31,7 @@ func ParseParameters() (*CmdParameters, error) {
 		return nil, errors.New("ip and datacenter and environment are required")
 	}
 	if *threadsParam > MaxNumberOfConcurrentConnections {
-		return nil, errors.New(fmt.Sprintf("Maximum number of concurrent connections = %d", MaxNumberOfConcurrentConnections))
+		return nil, fmt.Errorf("Maximum number of concurrent connections = %d", MaxNumberOfConcurrentConnections)
 	}
 	if *threadsParam < 0 {
 		return nil, errors.New("threads=number of simultaneous connections must be a positive number")

@@ -2,6 +2,7 @@ package consul
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -61,7 +62,7 @@ func GetListOfServices(client Client) ([]string, error) {
 			err := Body.Close()
 			if err != nil {
 				if client.Verbose {
-					log.Printf("Error closing response body:", err)
+					log.Printf("Error closing response body: %v", err)
 				}
 			}
 		}(res.Body)
@@ -111,7 +112,7 @@ func GetService(client Client, serviceName string) (*ServiceResponse, error) {
 		if client.Verbose {
 			log.Println(message)
 		}
-		return nil, fmt.Errorf(message)
+		return nil, errors.New(message)
 	}
 
 	if res.Body != nil {
@@ -119,7 +120,7 @@ func GetService(client Client, serviceName string) (*ServiceResponse, error) {
 			err := Body.Close()
 			if err != nil {
 				if client.Verbose {
-					log.Printf("Error closing response body:", err)
+					log.Printf("Error closing response body: %v", err)
 				}
 			}
 		}(res.Body)
