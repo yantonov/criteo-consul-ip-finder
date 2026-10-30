@@ -1,6 +1,6 @@
 module consul-ip-finder
 
-go 1.23.1
+go 1.26.10
 
 require (
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
